@@ -1,0 +1,30 @@
+{
+  "version": "phase6-v1",
+  "primary_metric": "hit_at_1",
+  "cases": [
+    {
+      "id": "lexical-auth",
+      "query": "authentication failures",
+      "project_id": "project-1",
+      "relevant_artifacts": ["src/auth.rs"]
+    },
+    {
+      "id": "paraphrase-auth",
+      "query": "repair login problem",
+      "project_id": "project-1",
+      "relevant_artifacts": ["src/auth.rs"]
+    },
+    {
+      "id": "project-scope",
+      "query": "cache lookup latency",
+      "project_id": "project-1",
+      "relevant_artifacts": []
+    },
+    {
+      "id": "irrelevant",
+      "query": "gardening recipe",
+      "project_id": "project-1",
+      "relevant_artifacts": []
+    }
+  ]
+}
