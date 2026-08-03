@@ -1088,7 +1088,7 @@ fn command_available(names: &[&str]) -> bool {
     })
 }
 
-fn writable_target(path: &Path) -> bool {
+pub(crate) fn writable_target(path: &Path) -> bool {
     let target = if path.exists() {
         path
     } else if let Some(parent) = path.parent() {
@@ -1110,7 +1110,7 @@ fn backup_path(path: &Path) -> PathBuf {
     path.with_file_name(format!("{name}.lore-original"))
 }
 
-fn create_backup(path: &Path, original: &[u8]) -> Result<PathBuf> {
+pub(crate) fn create_backup(path: &Path, original: &[u8]) -> Result<PathBuf> {
     let backup = backup_path(path);
     if backup.exists() {
         let existing = fs::read(&backup)?;
@@ -1140,7 +1140,7 @@ fn create_backup(path: &Path, original: &[u8]) -> Result<PathBuf> {
     Ok(backup)
 }
 
-fn atomic_replace(path: &Path, content: &[u8]) -> Result<()> {
+pub(crate) fn atomic_replace(path: &Path, content: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -1162,7 +1162,7 @@ fn atomic_replace(path: &Path, content: &[u8]) -> Result<()> {
     Ok(())
 }
 
-fn restore_backup(path: &Path, backup: &Path) -> Result<()> {
+pub(crate) fn restore_backup(path: &Path, backup: &Path) -> Result<()> {
     let content = fs::read(backup)?;
     atomic_replace(path, &content)
 }

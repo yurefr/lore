@@ -66,7 +66,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 `
 
 `-ApplySetup` is explicit consent to change the selected provider configuration and install Lore hooks in that project. Without it, the installer runs `lore setup --check` and leaves configuration unchanged.
 
-The installer never scans drives, recursively searches for Git repositories, edits `AGENTS.md`, or changes unknown provider configuration. MCP configuration is checked only at the known user-level paths for the supported providers; hooks are scoped to the selected project.
+The installer never scans drives, recursively searches for Git repositories, or changes unknown provider configuration. It does not edit `AGENTS.md` by default. MCP configuration is checked only at the known user-level paths for the supported providers; hooks are scoped to the selected project.
 
 ### Install from source with Cargo
 
@@ -92,6 +92,9 @@ lore setup --check --path C:\work\my-project
 # Configure supported MCP providers and install project hooks after consent
 lore setup --apply --yes --path C:\work\my-project
 
+# Optionally manage the Lore block in the known Codex global AGENTS.md
+lore setup --apply --yes --agent-instructions
+
 # Inspect foundation and integration diagnostics
 lore doctor --integrations
 
@@ -108,6 +111,8 @@ lore recall "repair login problem" --project-id <PROJECT_ID> --budget 5
 ```
 
 `search` and `recall` support project/global scope, artifact filters, minimum confidence, lexical-only fallback, and reindexing. The semantic provider is local and deterministic; no model download is required.
+
+`--agent-instructions` is opt-in and targets `CODEX_HOME\AGENTS.md` (or `%USERPROFILE%\.codex\AGENTS.md`). Lore inserts an ownership-marked, metadata-only workflow block, preserves unmarked instructions, creates a `.lore-original` backup before changing an existing file, and is idempotent. Use `lore setup --check --agent-instructions` for a read-only preview and `lore setup --remove --yes --agent-instructions` to remove only Lore-owned content.
 
 ## Update and uninstall
 

@@ -24,6 +24,7 @@ use crate::{
     domain::{event::EventEnvelope, retrieval::RetrievalScope},
     error::{LoreError, Result},
     infrastructure::{
+        agent_instructions::{self, Action as AgentInstructionsAction, AgentInstructionsReport},
         embeddings::HashEmbeddingProvider,
         hooks::{HookInstallReport, HookManager, HookRemoveReport},
         integrations::{IntegrationManager, IntegrationReport, Provider as IntegrationProvider},
@@ -74,6 +75,11 @@ enum Command {
         path: Option<PathBuf>,
         #[arg(long)]
         yes: bool,
+        #[arg(
+            long,
+            help = "Manage the known Codex global AGENTS.md instructions block"
+        )]
+        agent_instructions: bool,
     },
     Repair {
         #[arg(long, value_name = "PATH")]
@@ -276,6 +282,14 @@ struct DoctorWithIntegrations {
     integrations: IntegrationReport,
 }
 
+#[derive(Debug, Serialize)]
+struct SetupCommandReport {
+    #[serde(flatten)]
+    integration: IntegrationReport,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    agent_instructions: Option<AgentInstructionsReport>,
+}
+
 fn running_executable() -> Result<PathBuf> {
     // nosemgrep: rust.lang.security.current-exe.current-exe -- this only locates the running Lore binary for its own hooks, provider registration, and runtime; it is never used to trust external input.
     Ok(std::env::current_exe()?)
@@ -340,6 +354,7 @@ pub fn run() -> Result<()> {
             provider,
             path,
             yes,
+            agent_instructions,
         } => {
             let _ = check;
             if (apply || remove) && !yes {
@@ -392,7 +407,24 @@ pub fn run() -> Result<()> {
             if apply || remove {
                 report.hooks = Some(HookManager::inspect(&root)?);
             }
-            print_json(&report)?;
+            let agent_report = agent_instructions.then(|| {
+                let action = if apply {
+                    AgentInstructionsAction::Apply
+                } else if remove {
+                    AgentInstructionsAction::Remove
+                } else {
+                    AgentInstructionsAction::Check
+                };
+                agent_instructions::run(action)
+            });
+            if agent_report.is_some() {
+                print_json(&SetupCommandReport {
+                    integration: report,
+                    agent_instructions: agent_report,
+                })?;
+            } else {
+                print_json(&report)?;
+            }
         }
         Command::Repair { path } => {
             print_json(&repair(&service, &store, path)?)?;

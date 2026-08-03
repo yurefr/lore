@@ -291,3 +291,85 @@ fn doctor_integrations_exposes_non_mutating_report() {
     assert!(report["integrations"]["hooks"].is_object());
     assert!(!fixture.home.join("lore.db").exists());
 }
+
+#[test]
+fn setup_agent_instructions_is_idempotent_and_removes_only_owned_block() {
+    let fixture = Fixture::new(true);
+    fs::create_dir_all(&fixture.codex_home).expect("Codex home");
+    fs::write(
+        fixture.codex_home.join("config.toml"),
+        "[mcp_servers.other]\ncommand=\"other\"\nargs=[]\n",
+    )
+    .expect("Codex config");
+    let instructions = fixture.codex_home.join("AGENTS.md");
+    fs::write(&instructions, "# User policy\n").expect("agent instructions");
+
+    let check = json(fixture.run(&[
+        "setup",
+        "--check",
+        "--agent-instructions",
+        "--provider",
+        "codex",
+        "--path",
+        fixture.project.to_str().expect("project path"),
+    ]));
+    assert_eq!(check["agent_instructions"]["state"], "ready");
+    assert_eq!(
+        fs::read_to_string(&instructions).expect("unchanged instructions"),
+        "# User policy\n"
+    );
+
+    let first = json(fixture.run(&[
+        "setup",
+        "--apply",
+        "--yes",
+        "--agent-instructions",
+        "--provider",
+        "codex",
+        "--path",
+        fixture.project.to_str().expect("project path"),
+    ]));
+    assert_eq!(first["agent_instructions"]["state"], "managed");
+    assert_eq!(first["agent_instructions"]["changed"], true);
+    let first_bytes = fs::read(&instructions).expect("managed instructions");
+    let first_content = String::from_utf8_lossy(&first_bytes);
+    assert!(first_content.contains("lore-managed-agent-instructions:v1"));
+    assert!(first_content.contains("# User policy"));
+
+    let second = json(fixture.run(&[
+        "setup",
+        "--apply",
+        "--yes",
+        "--agent-instructions",
+        "--provider",
+        "codex",
+        "--path",
+        fixture.project.to_str().expect("project path"),
+    ]));
+    assert_eq!(second["agent_instructions"]["state"], "already_managed");
+    assert_eq!(second["agent_instructions"]["changed"], false);
+    assert_eq!(
+        fs::read(&instructions).expect("stable instructions"),
+        first_bytes
+    );
+
+    let removed = json(fixture.run(&[
+        "setup",
+        "--remove",
+        "--yes",
+        "--agent-instructions",
+        "--provider",
+        "codex",
+        "--path",
+        fixture.project.to_str().expect("project path"),
+    ]));
+    assert_eq!(removed["agent_instructions"]["state"], "removed");
+    let restored = fs::read_to_string(&instructions).expect("removed instructions");
+    assert!(restored.contains("# User policy"));
+    assert!(!restored.contains("lore-managed-agent-instructions:v1"));
+    assert!(
+        instructions
+            .with_file_name("AGENTS.md.lore-original")
+            .is_file()
+    );
+}

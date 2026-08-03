@@ -32,6 +32,8 @@ lore setup --apply --yes --provider codex --path .
 lore doctor --integrations
 ```
 
+To optionally add Lore lifecycle guidance to the known global Codex instruction file, run `lore setup --check --agent-instructions` and then `lore setup --apply --yes --agent-instructions`. This targets `CODEX_HOME/AGENTS.md` (or `%USERPROFILE%\\.codex\\AGENTS.md`), uses an ownership marker and backup, and preserves unmarked instructions.
+
 The adapter reads `%CODEX_HOME%\config.toml` (or `%USERPROFILE%\.codex\config.toml`), preserves other servers, and writes the `LORE_MANAGED_BY = "lore"` marker only to the entry created by Lore. `--check` writes nothing; `--apply` requires `--yes`; `--remove --yes` removes only an entry with that marker. The original file is kept as `config.toml.lore-original` for restoration.
 
 For distribution, replace the development path with the installed binary. When started by the host, `lore mcp` locates the existing runtime or starts `lore serve` in the background with the same `LORE_HOME`; running `serve` manually for every session is not required. The connector must not download a model, send data over the network, or store credentials.
