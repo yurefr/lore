@@ -169,13 +169,6 @@ The package is organized into `domain`, `application`, `infrastructure`, and `in
 - [Windows release security baseline](docs/release/security-baseline.md)
 - [All ADRs](docs/adr/)
 
-## Roadmap
-
-1. Phases 0–8.2 — RFC, foundation, capture, MCP, learning, knowledge, retrieval, context, hardening, safe provider onboarding, and Windows packaging: complete on Windows-first gates.
-2. Windows release packaging — ZIP installer and CI artifact: implemented and validated; public GitHub Release remains pending.
-3. Phase 9 — Post-MVP product increments: local read-only inspector, high-value native connectors, editor integration, graph/timeline/explainability, advanced insights, and optional synchronization.
-4. Linux/macOS compatibility and additional provider formats: after dedicated platform and adapter validation.
-
 ## License
 
 MIT. See [LICENSE](LICENSE).

@@ -108,15 +108,17 @@ impl CompletionPolicy {
         if let (Some(first), Some(last)) = (
             events.iter().map(|event| event.occurred_at).min(),
             events.iter().map(|event| event.occurred_at).max(),
-        ) && last.saturating_sub(first) > self.reorder_window_seconds
-            && events
-                .windows(2)
-                .any(|window| window[0].occurred_at > window[1].occurred_at)
-        {
-            diagnostics.push(format!(
-                "events were reordered across a window larger than {} seconds",
-                self.reorder_window_seconds
-            ));
+        ) {
+            if last.saturating_sub(first) > self.reorder_window_seconds
+                && events
+                    .windows(2)
+                    .any(|window| window[0].occurred_at > window[1].occurred_at)
+            {
+                diagnostics.push(format!(
+                    "events were reordered across a window larger than {} seconds",
+                    self.reorder_window_seconds
+                ));
+            }
         }
 
         let mut state = LearningSessionState::Open;

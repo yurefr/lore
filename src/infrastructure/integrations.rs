@@ -1,6 +1,8 @@
 use std::{
     collections::BTreeMap,
-    env, fs,
+    env,
+    fmt::Write as _,
+    fs,
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -764,7 +766,7 @@ fn empty_document(format: ConfigFormat) -> Document {
     }
 }
 
-fn document_entry<'a>(document: &'a Document, format: ConfigFormat) -> Option<DocumentEntry<'a>> {
+fn document_entry(document: &Document, format: ConfigFormat) -> Option<DocumentEntry<'_>> {
     match (document, format) {
         (Document::Toml(root), ConfigFormat::Toml) => toml_entry(root).map(DocumentEntry::Toml),
         (Document::Json(root), ConfigFormat::Json) => json_entry(root).map(DocumentEntry::Json),
@@ -1118,10 +1120,12 @@ fn create_backup(path: &Path, original: &[u8]) -> Result<PathBuf> {
         let mut hasher = Sha256::new();
         hasher.update(original);
         let digest = hasher.finalize();
-        let suffix: String = digest[..8]
+        let suffix = digest[..8]
             .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect();
+            .fold(String::with_capacity(16), |mut suffix, byte| {
+                write!(&mut suffix, "{byte:02x}").expect("writing to String cannot fail");
+                suffix
+            });
         let name = path
             .file_name()
             .and_then(|name| name.to_str())

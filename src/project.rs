@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Write as _,
+    path::{Path, PathBuf},
+};
 
 use sha2::{Digest, Sha256};
 
@@ -22,10 +25,13 @@ pub fn project_id(root: &Path) -> String {
     let mut hasher = Sha256::new();
     hasher.update(root.to_string_lossy().as_bytes());
     let digest = hasher.finalize();
-    let short_digest: String = digest[..16]
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect();
+    let short_digest =
+        digest[..16]
+            .iter()
+            .fold(String::with_capacity(32), |mut short_digest, byte| {
+                write!(&mut short_digest, "{byte:02x}").expect("writing to String cannot fail");
+                short_digest
+            });
     format!("local-{short_digest}")
 }
 

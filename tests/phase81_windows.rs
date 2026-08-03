@@ -8,9 +8,15 @@ use serde_json::Value;
 use tempfile::TempDir;
 
 fn binary() -> PathBuf {
-    std::env::var_os("CARGO_BIN_EXE_lore")
-        .map(PathBuf::from)
-        .expect("Cargo should expose the Lore binary to integration tests")
+    if let Some(path) = std::env::var_os("CARGO_BIN_EXE_lore") {
+        return PathBuf::from(path);
+    }
+
+    let mut path = std::env::current_exe().expect("Cargo should expose the Lore test binary");
+    path.pop();
+    path.pop();
+    path.push(if cfg!(windows) { "lore.exe" } else { "lore" });
+    path
 }
 
 struct Fixture {
